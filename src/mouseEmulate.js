@@ -70,6 +70,7 @@ window.MouseEmulate = ( function() {
         
         go: function( onComplete ) {
             this.placeholder = $( '<div class="mouseMovementPlaceholder">Placholder</div>' ).appendTo( $( 'body' ) );
+            this.updatePlaceholder();
                     
             var type = this.type == 'drag' ? 'mousemove' : this.type;
             
@@ -83,7 +84,7 @@ window.MouseEmulate = ( function() {
             
             this.fireEvent( type );
             
-            if( ( type == 'mousemove' ) && ( this.xDiff > 0 || this.yDiff > 0 ) ) {
+            if( ( type == 'mousemove' ) && ( this.xDiff || this.yDiff ) ) {
                 this.moveMouse();
             }
             
@@ -95,28 +96,37 @@ window.MouseEmulate = ( function() {
         moveMouse: function() {
             var me=this;
             setTimeout( function() {
-                if( me.xDiff > 0 ) {
-                    var xStep = Math.min( me.xDiff, STEP_SIZE );
+                if( me.xDiff ) {
+                    var xStep = Math.min( Math.abs( me.xDiff ), STEP_SIZE );
 
-                    me.currX += xStep;
-                    me.xDiff -= xStep;
+                    if( me.xDiff >= 0 ) {
+                        me.currX += xStep;
+                        me.xDiff -= xStep;
+                    }
+                    else {
+                        me.currX -= xStep;
+                        me.xDiff += xStep;
+                    }
                 }
                 
-                if( me.yDiff > 0 ) {
-                    var yStep = Math.min( me.yDiff, STEP_SIZE );
+                if( me.yDiff ) {
+                    var yStep = Math.min( Math.abs( me.yDiff ), STEP_SIZE );
                     
-                    me.currY += yStep;
-                    me.yDiff -= yStep;
+                    if( me.yDiff >= 0 ) {
+                        me.currY += yStep;
+                        me.yDiff -= yStep;
+                    }
+                    else {
+                        me.currY -= yStep;
+                        me.yDiff += yStep;
+                    }
                 }
 
                 var event = me.fireEvent( 'mousemove' );
                 
-                me.placeholder.css( {
-                    left: me.currX,
-                    top: me.currY
-                } );
+                me.updatePlaceholder();
                 
-                if( me.xDiff > 0 || me.yDiff > 0 ) {
+                if( me.xDiff || me.yDiff ) {
                     me.moveMouse();
                 }
                 else {
@@ -125,6 +135,13 @@ window.MouseEmulate = ( function() {
             }, INTERVAL );
         },
 
+        updatePlaceholder: function() {
+            this.placeholder.css( {
+                left: this.currX,
+                top: this.currY
+            } );
+        },
+        
         fireEvent: function( type, options ) {
             var event = this.createEvent( type );
             $.extend( event, options || {} );

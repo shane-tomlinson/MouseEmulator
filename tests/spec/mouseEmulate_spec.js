@@ -206,5 +206,39 @@ describe( "MouseEmulate", function() {
             expect( mouseOverCalled ).toBe( true );
         } );
     } );
+    
+    it( 'should move to the left', function() {
+        var mouseMoveCalled = false;
+        $( 'body' ).bind( 'mousemove', function( event ) {
+            mouseMoveCalled = true;
+        } );
+        
+        runs( function() {
+            $( '#rightSide' ).emulate( 'mousemove' ).x( -100 ).go();
+        } );
+        
+        waits( 300 );
+        
+        runs( function() {
+            expect( mouseMoveCalled ).toBe( true );
+        } );
+    } );
+
+    it( 'should move to the up', function() {
+        var mouseMoveCalled = false;
+        $( '#rightSide' ).bind( 'mousemove', function( event ) {
+            mouseMoveCalled = true;
+        } );
+        
+        runs( function() {
+            $( '#bottomSide' ).emulate( 'mousemove' ).y( -150 ).go();
+        } );
+        
+        waits( 300 );
+        
+        runs( function() {
+            expect( mouseMoveCalled ).toBe( true );
+        } );
+    } );
 
 } );
