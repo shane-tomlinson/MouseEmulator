@@ -1,3 +1,30 @@
+/**
+* Licensed under the Creative Commons Attribution 3.0 License.
+* See http://creativecommons.org/licenses/by/3.0/legalcode and 
+* http://creativecommons.org/licenses/by/3.0/
+*
+* Written by Shane Tomlinson, 2011
+* email: set117@yahoo.com
+* Twitter: @shane_tomlinson 
+* http://www.shanetomlinson.com
+* http://www.aframejs.com
+*/
+
+/**
+* A mouse emulation jQuery plugin, useful for unit testing.
+*
+*
+*##Basic Usage##
+*
+*    // moves the mouse from the center of the target 10px right and 10px down.
+*    $( target ).emulate( 'mousemove' ).x( 10 ).y( 10 ).go();
+*
+*    // click the mouse in the center of the target
+*    $( target ).emulate( 'click' ).go();
+*
+* If only using as a jQuery plugin, the initial window.MouseEmulate can be removed to keep
+*   the global namespace from being polluted.
+*/
 window.MouseEmulate = ( function() {
     "use strict";
     
