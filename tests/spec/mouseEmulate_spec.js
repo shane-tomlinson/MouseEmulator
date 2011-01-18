@@ -2,51 +2,36 @@
 describe( "MouseEmulate", function() {
     "use strict";
     
-    var emulate, moveCalledLeftSide, moveCalledRightSide, moveCalledBottomSide;
-    var mousedownCalledLeftSide, mousedownCalledRightSide, mousedownCalledBottomSide;
-    var mouseupCalledLeftSide, mouseupCalledRightSide, mouseupCalledBottomSide;
+    var emulate, eventsCalled;
+    var WAIT_DELAY = 500;
     
-    $( '#leftSide' ).bind( 'mousemove', function( event ) {
-        moveCalledLeftSide = true;
-    } );
-    $( '#leftSide' ).bind( 'mousedown', function( event ) {
-        mousedownCalledLeftSide = true;
-    } );
-    $( '#leftSide' ).bind( 'mouseup', function( event ) {
-        mouseupCalledLeftSide = true;
-    } );
+    [ 'mousemove', 'mouseout', 'mouseover', 'mousedown', 'mouseup' ].forEach( 
+        function( eventName, index ) {
+            $( '#leftSide' ).bind( eventName, eventHandler );
+            $( '#rightSide' ).bind( eventName, eventHandler );
+            $( '#bottomSide' ).bind( eventName, eventHandler );
+        } );
     
-    $( '#rightSide' ).bind( 'mousemove', function( event ) {
-        moveCalledRightSide = true;
-    } );
-    $( '#rightSide' ).bind( 'mousedown', function( event ) {
-        mousedownCalledRightSide = true;
-    } );
-    $( '#rightSide' ).bind( 'mouseup', function( event ) {
-        mouseupCalledRightSide = true;
-    } );
+    function eventHandler( event ) {
+        var elementID = $( event.currentTarget ).attr( 'id' );
+        eventsCalled[ elementID ][ event.type ] = true;
+        console.log( elementID + ': ' + event.type + '(' + event.pageX + ',' + event.pageY + ')' );
+    };
     
-    $( '#bottomSide' ).bind( 'mousemove', function( event ) {
-        moveCalledBottomSide = true;
-    } );
-    $( '#bottomSide' ).bind( 'mousedown', function( event ) {
-        mousedownCalledBottomSide = true;
-    } );
-    $( '#bottomSide' ).bind( 'mouseup', function( event ) {
-        mouseupCalledBottomSide = true;
-    } );
-    
-    
+    function resetEvents() {
+        eventsCalled = {
+            leftSide: {},
+            rightSide: {},
+            bottomSide: {}
+        };
+    }
     beforeEach( function() {
         emulate = new MouseEmulate();
         emulate.init( {
             type: 'mousemove',
             target: $( '#leftSide' )
         } );
-        
-        moveCalledLeftSide = moveCalledRightSide = moveCalledBottomSide = false;
-        mousedownCalledLeftSide = mousedownCalledRightSide = mousedownCalledBottomSide = false;
-        mouseupCalledLeftSide = mouseupCalledRightSide = mouseupCalledBottomSide = false;
+        resetEvents();
     } );
     
     afterEach( function() {
@@ -69,9 +54,9 @@ describe( "MouseEmulate", function() {
     it( 'should trigger some mouse movements on leftSide', function() {
         emulate.x( 10 ).go();
         
-        expect( moveCalledLeftSide ).toBe( true );
-        expect( moveCalledRightSide ).toBe( false );
-        expect( moveCalledBottomSide ).toBe( false );
+        expect( eventsCalled.leftSide.mousemove ).toBe( true );
+        expect( eventsCalled.rightSide.mousemove ).toBeUndefined();
+        expect( eventsCalled.bottomSide.mousemove ).toBeUndefined();
     } );
     
     it( 'should trigger some mouse movements on both left and right side', function() {
@@ -80,12 +65,12 @@ describe( "MouseEmulate", function() {
             emulate.x( 100 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( moveCalledLeftSide ).toBe( true );
-            expect( moveCalledRightSide ).toBe( true );
-            expect( moveCalledBottomSide ).toBe( false );
+            expect( eventsCalled.leftSide.mousemove ).toBe( true );
+            expect( eventsCalled.rightSide.mousemove ).toBe( true );
+            expect( eventsCalled.bottomSide.mousemove ).toBeUndefined();
         } );
     } );
 
@@ -95,12 +80,12 @@ describe( "MouseEmulate", function() {
             emulate.x( 1000 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( moveCalledLeftSide ).toBe( true );
-            expect( moveCalledRightSide ).toBe( true );
-            expect( moveCalledBottomSide ).toBe( false );
+            expect( eventsCalled.leftSide.mousemove ).toBe( true );
+            expect( eventsCalled.rightSide.mousemove ).toBe( true );
+            expect( eventsCalled.bottomSide.mousemove ).toBeUndefined();
         } );
     } );
 
@@ -110,12 +95,12 @@ describe( "MouseEmulate", function() {
             emulate.y( 10 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( moveCalledLeftSide ).toBe( true );
-            expect( moveCalledRightSide ).toBe( false );
-            expect( moveCalledBottomSide ).toBe( false );
+            expect( eventsCalled.leftSide.mousemove ).toBe( true );
+            expect( eventsCalled.rightSide.mousemove ).toBeUndefined();
+            expect( eventsCalled.bottomSide.mousemove ).toBeUndefined();
         } );
     } );
 
@@ -125,12 +110,12 @@ describe( "MouseEmulate", function() {
             emulate.y( 100 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( moveCalledLeftSide ).toBe( true );
-            expect( moveCalledRightSide ).toBe( false );
-            expect( moveCalledBottomSide ).toBe( true );
+            expect( eventsCalled.leftSide.mousemove ).toBe( true );
+            expect( eventsCalled.rightSide.mousemove ).toBeUndefined();
+            expect( eventsCalled.bottomSide.mousemove ).toBe( true );
         } );
     } );
 
@@ -140,12 +125,12 @@ describe( "MouseEmulate", function() {
             emulate.x( 100 ).y( 100 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( moveCalledLeftSide ).toBe( true );
-            expect( moveCalledRightSide ).toBe( true );
-            expect( moveCalledBottomSide ).toBe( true );
+            expect( eventsCalled.leftSide.mousemove ).toBe( true );
+            expect( eventsCalled.rightSide.mousemove ).toBe( true );
+            expect( eventsCalled.bottomSide.mousemove ).toBe( true );
         } );
     } );
 
@@ -156,20 +141,20 @@ describe( "MouseEmulate", function() {
             $( '#leftSide' ).emulate( 'drag' ).x( 100 ).y( 100 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( mousedownCalledLeftSide ).toBe( true );
-            expect( mouseupCalledLeftSide ).toBe( false );
-            expect( moveCalledLeftSide ).toBe( true );
+            expect( eventsCalled.leftSide.mousedown ).toBe( true );
+            expect( eventsCalled.leftSide.mouseup ).toBeUndefined();
+            expect( eventsCalled.leftSide.mousemove ).toBe( true );
             
-            expect( moveCalledRightSide ).toBe( true );
-            expect( mousedownCalledRightSide ).toBe( false );
-            expect( mouseupCalledRightSide ).toBe( false );
+            expect( eventsCalled.rightSide.mousemove ).toBe( true );
+            expect( eventsCalled.rightSide.mousedown ).toBeUndefined();
+            expect( eventsCalled.rightSide.mouseup ).toBeUndefined();
             
-            expect( moveCalledBottomSide ).toBe( true );
-            expect( mousedownCalledBottomSide ).toBe( false );
-            expect( mouseupCalledBottomSide ).toBe( true );
+            expect( eventsCalled.bottomSide.mousemove ).toBe( true );
+            expect( eventsCalled.bottomSide.mousedown ).toBeUndefined();
+            expect( eventsCalled.bottomSide.mouseup ).toBe( true );
         } );
     } );
     
@@ -183,7 +168,7 @@ describe( "MouseEmulate", function() {
             } );
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
             expect( callbackCalled ).toBe( true );
@@ -191,19 +176,14 @@ describe( "MouseEmulate", function() {
     } );
     
     it( 'triggers a mouseover when starting', function() {
-        var mouseOverCalled = false;
-        $( '#leftSide' ).bind( 'mouseover', function( event ) {
-            mouseOverCalled = true;
-        } );
-        
         runs( function() {
             $( '#leftSide' ).emulate( 'mousemove' ).x( 10 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( mouseOverCalled ).toBe( true );
+            expect( eventsCalled.leftSide.mouseover ).toBe( true );
         } );
     } );
     
@@ -217,7 +197,7 @@ describe( "MouseEmulate", function() {
             $( '#rightSide' ).emulate( 'mousemove' ).x( -100 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
             expect( mouseMoveCalled ).toBe( true );
@@ -225,20 +205,53 @@ describe( "MouseEmulate", function() {
     } );
 
     it( 'should move to the up', function() {
-        var mouseMoveCalled = false;
-        $( '#rightSide' ).bind( 'mousemove', function( event ) {
-            mouseMoveCalled = true;
-        } );
-        
+
         runs( function() {
             $( '#bottomSide' ).emulate( 'mousemove' ).y( -150 ).go();
         } );
         
-        waits( 300 );
+        waits( WAIT_DELAY );
         
         runs( function() {
-            expect( mouseMoveCalled ).toBe( true );
+            expect( eventsCalled.rightSide.mousemove ).toBe( true );
         } );
     } );
 
+    it( 'on move, should trigger mouseout and mouseover', function() {
+        
+        runs( function() {
+            $( '#leftSide' ).emulate( 'mousemove' ).x( 100 ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+            expect( eventsCalled.leftSide.mouseout ).toBe( true );
+            expect( eventsCalled.rightSide.mouseover ).toBe( true );
+        } );
+    } );
+    
+    it( 'mouseout from last container in last run, mouseover to first container in new run', function() {
+        runs( function() {
+            $( '#leftSide' ).emulate( 'mousemove' ).x( 100 ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+        
+            resetEvents();
+            $( '#leftSide' ).emulate( 'mousemove' ).x( 1 ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+            expect( eventsCalled.rightSide.mouseout ).toBe( true );
+            expect( eventsCalled.rightSide.mouseover ).toBeUndefined();
+            
+            expect( eventsCalled.leftSide.mouseover ).toBe( true );
+            expect( eventsCalled.leftSide.mouseout ).toBeUndefined();
+        } );
+    } );
 } );

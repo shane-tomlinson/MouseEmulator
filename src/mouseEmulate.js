@@ -28,8 +28,10 @@
 window.MouseEmulate = ( function() {
     "use strict";
     
-    var STEP_SIZE = 25;
+    var STEP_SIZE = 10;
     var INTERVAL = 25;
+    
+    var lastOver;
     
     var Emulate = function() {
     };
@@ -48,6 +50,9 @@ window.MouseEmulate = ( function() {
             return this;
         },
         
+        /**
+        * Remove the emulator
+        */
         remove: function() {
             if( this.placeholder ) {
                 this.placeholder.remove();
@@ -56,27 +61,43 @@ window.MouseEmulate = ( function() {
             return this;
         },
         
+        /**
+        * Set how much to change for the x coordinate
+        * @param {number} amount
+        */
         x: function( amount ) {
             this.xDiff = amount;
             
             return this;
         },
         
+        /**
+        * How much to change in the y coordinate
+        * @param {number} amount
+        */
         y: function( amount ) {
             this.yDiff = amount;
             
             return this;
         },
         
+        /**
+        * GO!
+        */
         go: function( onComplete ) {
             this.placeholder = $( '<div class="mouseMovementPlaceholder">Placholder</div>' ).appendTo( $( 'body' ) );
             this.updatePlaceholder();
                     
             var type = this.type == 'drag' ? 'mousemove' : this.type;
             
-            if( this.type ) {
+            // if doing any sort of movement, start with a mouseover 
+            //  - some frameworks depend heavily on mouseovers.
+            if( type == 'mousemove' ) {
                 this.fireEvent( 'mouseover' );
-                
+            }
+            
+            // if dragging, do a mousedown
+            if( this.type == 'drag' ) {
                 this.fireEvent( 'mousedown', {
                     which: 1
                 } );
@@ -84,57 +105,90 @@ window.MouseEmulate = ( function() {
             
             this.fireEvent( type );
             
-            if( ( type == 'mousemove' ) && ( this.xDiff || this.yDiff ) ) {
-                this.moveMouse();
-            }
-            
             this.onComplete = onComplete;
+
+            if( type == 'mousemove' ) {
+                this.checkMouseMove();
+            }
             
             return this;
         },
         
-        moveMouse: function() {
-            var me=this;
-            setTimeout( function() {
-                if( me.xDiff ) {
-                    var xStep = Math.min( Math.abs( me.xDiff ), STEP_SIZE );
+        /**
+        * Check whether we have to do a mouse move, or to finish
+        * @private
+        */
+        checkMouseMove: function() {
+            if( this.xDiff || this.yDiff ) {
+                var me = this;
+                setTimeout( function() {
+                    me.simulateMouseMove();
+                }, INTERVAL );
+            }
+            else {
+                this.finish();
+            }
+        },
+        
+        /**
+        * simulate the mouse move
+        * @private
+        */
+        simulateMouseMove: function() {
+            
+            this.updateXCoordinates();
+            this.updateYCoordinates();
+            this.updatePlaceholder();
 
-                    if( me.xDiff >= 0 ) {
-                        me.currX += xStep;
-                        me.xDiff -= xStep;
-                    }
-                    else {
-                        me.currX -= xStep;
-                        me.xDiff += xStep;
-                    }
-                }
-                
-                if( me.yDiff ) {
-                    var yStep = Math.min( Math.abs( me.yDiff ), STEP_SIZE );
-                    
-                    if( me.yDiff >= 0 ) {
-                        me.currY += yStep;
-                        me.yDiff -= yStep;
-                    }
-                    else {
-                        me.currY -= yStep;
-                        me.yDiff += yStep;
-                    }
-                }
+            this.checkMouseOutOver();
+            
+            var event = this.fireEvent( 'mousemove' );
+            
+            this.checkMouseMove();
+        },
+        
+        /**
+        * Update the X Coordinates/diff
+        * @private
+        */
+        updateXCoordinates: function() {
+            if( this.xDiff ) {
+                var xStep = Math.min( Math.abs( this.xDiff ), STEP_SIZE );
 
-                var event = me.fireEvent( 'mousemove' );
-                
-                me.updatePlaceholder();
-                
-                if( me.xDiff || me.yDiff ) {
-                    me.moveMouse();
+                if( this.xDiff >= 0 ) {
+                    this.currX += xStep;
+                    this.xDiff -= xStep;
                 }
                 else {
-                    me.finish();
+                    this.currX -= xStep;
+                    this.xDiff += xStep;
                 }
-            }, INTERVAL );
+            }
+        },
+        
+        /**
+        * Update the Y Coordinates/diff
+        * @private
+        */
+        updateYCoordinates: function() {
+            if( this.yDiff ) {
+                var yStep = Math.min( Math.abs( this.yDiff ), STEP_SIZE );
+                
+                if( this.yDiff >= 0 ) {
+                    this.currY += yStep;
+                    this.yDiff -= yStep;
+                }
+                else {
+                    this.currY -= yStep;
+                    this.yDiff += yStep;
+                }
+            }
         },
 
+        /**
+        * Update the position of the placeholder
+        * @private
+        */
         updatePlaceholder: function() {
             this.placeholder.css( {
                 left: this.currX,
@@ -142,15 +196,44 @@ window.MouseEmulate = ( function() {
             } );
         },
         
-        fireEvent: function( type, options ) {
+        /**
+        * Checks to see if we moused out of one container and into another.
+        * @private
+        */
+        checkMouseOutOver: function() {
+            var currOver = this.getCurrentTarget();
+
+            if( currOver != lastOver ) {
+                // only fire mouseout if there is a lastOver.
+                lastOver && this.fireEvent( 'mouseout', {}, lastOver );
+                
+                this.fireEvent( 'mouseover', {}, currOver );
+                lastOver = currOver;
+            }
+        },
+        
+        /**
+        * Fire an event.
+        * @param {string} type - type of event to fire
+        * @param {object} options (optional)- options to augment event with
+        * @param {element} target (optional) - target to send event to, if not given, uses the element
+        *   under the current position
+        * @private
+        */
+        fireEvent: function( type, options, target ) {
             var event = this.createEvent( type );
             $.extend( event, options || {} );
             
-            target = this.getCurrentTarget();
+            target = $( target || this.getCurrentTarget() );
             target.trigger( event );
         },
         
-        
+        /**
+        * Create an event of the given type
+        * @param {string} type - type of event to create
+        * @return {jQuery.Event}
+        * @private
+        */
         createEvent: function( type ) {
             var event = new $.Event( type );
             
@@ -162,6 +245,11 @@ window.MouseEmulate = ( function() {
             return event;
         },
         
+        /**
+        * Get the element under the current position
+        * @return {Element}
+        * @private
+        */
         getCurrentTarget: function() {
             this.placeholder.hide();
             var target = $( document.elementFromPoint( this.currX, this.currY ) );
@@ -170,6 +258,10 @@ window.MouseEmulate = ( function() {
             return target;
         },
         
+        /**
+        * Finish up, call any callbacks.
+        * @private
+        */
         finish: function() {
             if( this.type == 'drag' ) {
                 this.fireEvent( 'mouseup' );
