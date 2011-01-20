@@ -5,7 +5,7 @@ describe( "MouseEmulate", function() {
     var emulate, eventsCalled;
     var WAIT_DELAY = 500;
     
-    [ 'mousemove', 'mouseout', 'mouseover', 'mousedown', 'mouseup' ].forEach( 
+    [ 'mousemove', 'mouseout', 'mouseover', 'mousedown', 'mouseup', 'click' ].forEach( 
         function( eventName, index ) {
             $( '#leftSide' ).bind( eventName, eventHandler );
             $( '#rightSide' ).bind( eventName, eventHandler );
@@ -15,8 +15,12 @@ describe( "MouseEmulate", function() {
     function eventHandler( event ) {
         var elementID = $( event.currentTarget ).attr( 'id' );
         eventsCalled[ elementID ][ event.type ] = true;
-        console.log( elementID + ': ' + event.type + '(' + event.pageX + ',' + event.pageY + ')' );
+        window.console && console.log( elementID + ': ' + event.type + '(' + event.pageX + ',' + event.pageY + ')' );
     };
+    
+    function cancelEventHandler( event ) {
+        event.preventDefault();
+    }
     
     function resetEvents() {
         eventsCalled = {
@@ -254,4 +258,60 @@ describe( "MouseEmulate", function() {
             expect( eventsCalled.leftSide.mouseout ).toBeUndefined();
         } );
     } );
+    
+    it( 'click triggers mouseover, mousedown, mouseup, then click', function( event ) {
+        runs( function() {
+            $( '#leftSide' ).emulate( 'click' ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+            expect( eventsCalled.leftSide.mouseover ).toBe( true );
+            expect( eventsCalled.leftSide.mousedown ).toBe( true );
+            expect( eventsCalled.leftSide.mouseup ).toBe( true );
+            expect( eventsCalled.leftSide.click ).toBe( true );
+        } );
+    } );
+    
+    it( 'mouseup, click not triggered if mousedown cancelled', function() {
+        $( '#leftSide' ).bind( 'mousedown', cancelEventHandler );
+        
+        runs( function() {
+            $( '#leftSide' ).emulate( 'click' ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+            expect( eventsCalled.leftSide.mouseover ).toBe( true );
+            expect( eventsCalled.leftSide.mousedown ).toBe( true );
+            expect( eventsCalled.leftSide.mouseup ).toBeUndefined();
+            expect( eventsCalled.leftSide.click ).toBeUndefined();
+            $( '#leftSide' ).unbind( 'mousedown', cancelEventHandler );
+        } );
+        
+    
+    } );
+
+    it( 'not triggered if mouseup cancelled', function() {
+        $( '#leftSide' ).bind( 'mouseup', cancelEventHandler );
+        
+        runs( function() {
+            $( '#leftSide' ).emulate( 'click' ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+            expect( eventsCalled.leftSide.mouseover ).toBe( true );
+            expect( eventsCalled.leftSide.mousedown ).toBe( true );
+            expect( eventsCalled.leftSide.mouseup ).toBe( true );
+            expect( eventsCalled.leftSide.click ).toBeUndefined();
+            $( '#leftSide' ).unbind( 'mouseup', cancelEventHandler );
+        } );
+        
+    
+    } );
+    
 } );

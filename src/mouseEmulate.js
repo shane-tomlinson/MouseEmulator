@@ -47,6 +47,8 @@ window.MouseEmulate = ( function() {
             
             this.xDiff = this.yDiff = 0;
             
+            $( '.mouseMovementPlaceholder' ).remove();
+            
             return this;
         },
         
@@ -85,6 +87,7 @@ window.MouseEmulate = ( function() {
         * GO!
         */
         go: function( onComplete ) {
+            this.onComplete = onComplete;
             this.placeholder = $( '<div class="mouseMovementPlaceholder">Placholder</div>' ).appendTo( $( 'body' ) );
             this.updatePlaceholder();
                     
@@ -92,20 +95,33 @@ window.MouseEmulate = ( function() {
             
             // if doing any sort of movement, start with a mouseover 
             //  - some frameworks depend heavily on mouseovers.
-            if( type == 'mousemove' ) {
+            if( type == 'mousemove' || this.type == 'click' ) {
                 this.fireEvent( 'mouseover' );
             }
             
             // if dragging, do a mousedown
-            if( this.type == 'drag' ) {
-                this.fireEvent( 'mousedown', {
+            if( this.type == 'drag' || this.type == 'click' ) {
+                var event = this.fireEvent( 'mousedown', {
                     which: 1
                 } );
+                
+                if( event.isDefaultPrevented() ) {
+                    return this.finish();
+                }
+            }
+            
+            if( this.type == 'click' ) {
+                event = this.fireEvent( 'mouseup', {
+                    which: 1
+                } );
+                
+                if( event.isDefaultPrevented() ) {
+                    return this.finish();
+                }
             }
             
             this.fireEvent( type );
             
-            this.onComplete = onComplete;
 
             if( type == 'mousemove' ) {
                 this.checkMouseMove();
@@ -218,6 +234,7 @@ window.MouseEmulate = ( function() {
         * @param {object} options (optional)- options to augment event with
         * @param {element} target (optional) - target to send event to, if not given, uses the element
         *   under the current position
+        * @return {jQuery.Event}
         * @private
         */
         fireEvent: function( type, options, target ) {
@@ -226,6 +243,8 @@ window.MouseEmulate = ( function() {
             
             target = $( target || this.getCurrentTarget() );
             target.trigger( event );
+            
+            return event;
         },
         
         /**
