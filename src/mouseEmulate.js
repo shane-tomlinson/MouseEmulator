@@ -47,8 +47,6 @@ window.MouseEmulate = ( function() {
             
             this.xDiff = this.yDiff = 0;
             
-            $( '.mouseMovementPlaceholder' ).remove();
-            
             return this;
         },
         
@@ -126,8 +124,9 @@ window.MouseEmulate = ( function() {
             if( type == 'mousemove' ) {
                 this.checkMouseMove();
             }
-            
-            return this;
+            else {
+                this.finish();
+            }
         },
         
         /**

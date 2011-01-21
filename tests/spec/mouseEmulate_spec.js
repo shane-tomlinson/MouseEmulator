@@ -314,4 +314,16 @@ describe( "MouseEmulate", function() {
     
     } );
     
+    it( 'cleans up its placeholder when done', function() {
+        runs( function() {
+            $( '#leftSide' ).emulate( 'click' ).go();
+        } );
+        
+        waits( WAIT_DELAY );
+        
+        runs( function() {
+            expect( $( 'mouseMovementPlaceholder' ).length ).toBe( 0 );
+        } );
+    } );
+    
 } );
